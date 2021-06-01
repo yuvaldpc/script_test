@@ -1,2 +1,526 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+#!/bin/bash
+
+
+#verable
+
+
+#touch `pwd`/positive_result.log && touch `pwd`/negetive_result.log && touch `pwd`/server_list_$year
+
+
+pwd=$(pwd)
+touch   $pwd/positive_result.log negetive_result.log ssh_check.log need_to_change_timezone && chmod 755  $pwd/positive_result.log negetive_result.log ssh_check.log need_to_change_timezone
+fileresult1=$($pwd/negetive_result.log)
+fileresult2=$($pwd/positive_result.log)
+date=$(timedatectl |grep -i 'time zone' |awk '{print $3}')
+timezoone=$(timedatectl |grep -i 'time zone')
+year=$(date | awk '{print $6}')
+resultpos=$(cat $pwd/positive_result.log )
+resultneg=$(cat $pwd/negetive_result.log)
+CHECKLIST=$(cat $pwd/server_list_$year)
+#finish1=$(wc -l $pwd/negetive_result.log |awk '{ print $1}')
+#finish2=$(wc -l $pwd/positive_result.log |awk '{ print $1}')
+#finish3=$(wc -l $pwd/ssh_check.log | awk '{ print $1}')
+#finish4=$(wc -l $pwd/need_to_change_timezone |awk '{ print $1}')
+
+
+
+clear
+
+
+
+
+echo  ################################################
+echo "# hello,welcome to time changer script ver 1.0 #"
+echo  ################################################
+echo
+echo
+echo
+echo
+
+echo "what do you want to ?"
+echo ----------------------
+echo
+echo
+
+echo "1) check if local time is good.## host only ## ( israel time zoon )"
+echo
+echo
+echo
+echo "2) replace localtime zoon on ##remote server## ( israel timezoon only ) "
+echo
+echo
+echo
+echo "3) check if local time is good (for ##remote## server)"
+echo
+echo
+echo "4) delete all logs file frome server (do it after use this script.)"
+
+read want
+
+case $want in
+
+        1)
+                clear
+                echo "###################################################"
+                echo "# checking local time on this server.please wait. #"
+                echo "###################################################"
+                echo
+                echo
+                echo
+                echo
+
+##if jerualem exsist
+
+if [ $date != 'Asia/Jerusalem' ] ;then
+
+        echo "time zoon is not good."
+        echo "to make this script good,please make sure you have the Asia/Jerusalem in this server."
+        echo
+        echo
+        echo "do you want to run this script againe? y/n"
+
+elif [ $date == 'Asia/Jerusalem' ] ;then
+
+        echo "the time zoon in this server is good "
+        echo
+        echo
+        echo "######################################"
+        echo $timezoone
+        echo "######################################"
+        echo
+        echo
+        echo "you dont need to change localzoone here.."
+        echo
+        echo
+        echo "do you want to do something else? y/n"
+
+fi
+
+        read run
+
+
+
+if [ $run == 'y' ] || [ $run == 'yes' ];then
+
+
+         /`pwd`/time_checker
+
+ else
+
+
+         echo "exsit."
+
+ fi
+
+
+ ;;
+
+
+
+  2)
+
+          touch $pwd/server_list_$year && chmod +x $pwd/server_list_$year
+
+
+          echo -n "" > $pwd/positive_result.log
+          echo -n "" > $pwd/ssh_check.log
+
+          echo "please write the remote ip server on the file `pwd`/server_list_$year"
+          echo
+          echo
+          echo "you allredy have? can we start? y/n"
+
+read can
+
+if [ $can == 'n' ] || [ $can == 'no' ];then
+
+        echo "ok..run this script againt when the server_list is reedy."
+        exit
+
+elif  [ $can == 'y' ] ||  [ $can == 'yes' ] ;then
+
+
+        echo "starting to replace localzoon on the remote server."
+        echo "please do not stop this script while working."
+        echo "its will make a bigproblem . thanke you"
+
+        echo "###########################"
+        echo "#         START           #"
+        echo "###########################"
+else
+
+        "please ansewr yes or no next time."
+        exit
+
+
+fi
+
+
+
+
+for i in `cat $pwd/server_list_$year` ;do
+
+                ssh -o ConnectTimeout=5  root@$i 'rm -rf  /etc/localtime'
+                ssh  -o ConnectTimeout=5 root@$i 'ln -sf /usr/usr/share/zoneinfo/Asia/Jerusalem /etc/localtime'
+
+
+
+w2=$(echo $?)
+
+
+
+if [ $w2 == 130 ];then
+
+                echo "not auturise to get $i server" >> $pwd/NOT_AUTORIZE
+                continue
+
+
+
+elif [ $w2 == 255 ];then
+
+        echo "cant conect to $i server " >> $pwd/ssh_check.log
+
+
+
+
+elif [ $w2 == 1 ] ;then
+
+                echo "$i" >>  $pwd/negetive_result.log
+                echo "**$i time zoon need to change!**"
+
+
+elif [ $w2 == 0 ] ;then
+
+        echo "change time secssefuly on $i" >> $pwd/positive_result.log
+        echo "---time change secsessfuly---> $i "
+
+fi
+
+done
+
+
+finish1=$(wc -l $pwd/negetive_result.log |awk '{ print $1}')
+finish2=$(wc -l $pwd/positive_result.log |awk '{ print $1}')
+finish3=$(wc -l $pwd/ssh_check.log | awk '{ print $1}')
+finish4=$(wc -l $pwd/need_to_change_timezone |awk '{ print $1}')
+
+
+F1=$(echo $finish1)
+F2=$(echo $finish2)
+F3=$(echo $finish3)
+
+
+
+echo
+echo
+echo
+echo
+echo "______________________________________________________________________________________________"
+echo "______________________________________________________________________________________________"
+echo
+echo
+echo "############"
+echo "#   DONE   #"
+echo "############"
+echo
+echo "you can see all result in .log file."
+echo
+echo
+echo
+echo "###################################"
+echo "# server lost conection :$F3 #"
+echo "###################################"
+echo
+echo
+echo "########################"
+echo "# good server:$F2 #"
+echo "########################"
+echo
+echo
+echo "#####################################"
+echo "# replace time zoon server:$F1 #"
+echo "#####################################"
+echo
+echo
+echo
+echo
+echo "#######################################################"
+echo "# do you want to change time on the bad servers now?? #"
+echo "#######################################################"
+
+
+read now
+
+if [ $now == 'no' ];then
+
+        exit
+
+elif [ $now == 'yes' ];then
+
+        echo "####################"
+        echo "#   STATRING COPY  #"
+        echo "####################"
+
+fi
+
+
+
+echo -n "" > $pwd/ssh_check.log
+
+
+
+for i in `cat $pwd/negetive_result.log`;do
+
+
+          scp /usr/usr/share/zoneinfo/Asia/Jerusalem root@$i:/usr/usr/share/zoneinfo/Asia/
+
+          ssh  -o ConnectTimeout=5  root@$i 'rm -rf  /etc/localtime'
+          ssh  -o ConnectTimeout=5  root@$i 'ln -sf /usr/usr/share/zoneinfo/Asia/Jerusalem /etc/localtime'
+
+          w3=$(echo $?)
+
+if [ $w3 == 130 ];then
+
+                echo "not auturise to get $i server" >> $pwd/NOT_AUTORIZE
+                continue
+
+
+
+elif [ $w3 == 255 ];then
+
+        echo "cant conect to $i server " >> $pwd/ssh_check.log
+
+
+
+
+elif [ $w3 == 1 ] ;then
+
+                echo "$i" >>  $pwd/need_to_change_timezone.log
+
+
+elif [ $w3 == 0 ] ;then
+
+        echo "change time secssefuly on $i" >> $pwd/positive_result.log
+
+fi
+
+
+
+
+done
+
+
+finish1=$(wc -l $pwd/negetive_result.log |awk '{ print $1}')
+finish2=$(wc -l $pwd/positive_result.log |awk '{ print $1}')
+finish3=$(wc -l $pwd/ssh_check.log | awk '{ print $1}')
+finish4=$(wc -l $pwd/need_to_change_timezone |awk '{ print $1}')
+
+
+
+diy4=$(echo $finish4)
+
+diy3=$(echo $finish3)
+diy2=$(echo $finish2)
+diy1=$(echo $finish1)
+
+
+
+
+
+
+echo "############"
+echo "#   DONE   #"
+echo "############"
+echo
+echo "you can see all result in deffrent file."
+echo
+echo "just coammnd "ls -a" and see all result file."
+echo
+echo "###################################"
+echo "# server lost conection :$diy3 #"
+echo "###################################"
+echo
+echo
+echo "########################"
+echo "# good server:$diy2 #"
+echo "########################"
+echo
+echo
+echo "#####################################"
+echo "# replace time zoon server:$diy4 #"
+echo "#####################################"
+echo
+echo
+echo
+echo
+
+echo "#################################"
+echo "# THANKS FOR USING TIME CHECKER #"
+echo "#################################"
+;;
+
+
+
+3)
+
+        touch `pwd`/server_list_$year && chmod +x `pwd`/server_list_$year
+
+          echo "please write the remote ip server on the file `pwd`/server_list_$year"
+          echo
+          echo
+          echo "you allredy have? can we start? y/n"
+
+read can
+
+if [ $can == 'n' ];then
+
+        echo "ok..run this script againt when the server_list is reedy."
+        exit
+
+elif  [ $can == 'y' ];then
+
+
+
+        echo "###########################"
+        echo "#         STARTING        #"
+        echo "###########################"
+        echo
+        echo
+        echo "please do not stop this script while working."
+        echo
+        echo -n "" > $pwd/negetive_result.log
+        echo -n "" > $pwd/ssh_check.log
+        echo -n "" > $pwd/positive_result.log
+
+
+else
+
+        "echo $can not a smart answer,please write y/n"
+        exit
+
+
+fi
+
+
+for i in $CHECKLIST ; do
+
+      ssh   -o ConnectTimeout=5  $i  'ls -l /etc/localtime |grep -i  /usr/share/zoneinfo/Asia/Jerusalem'
+
+
+
+
+w1=$(echo $?)
+
+
+
+
+if [ $w1 == '255' ];then
+
+        echo "cant connect to $i coonect " >> $pwd/ssh_check.log
+
+
+elif [ $w1  == '0' ] ;then
+
+        echo "$i server is good" >> $pwd/positive_result.log
+
+
+
+#elif [ $? == 130 ];then
+
+#        echo "not auturise to get $i server" >> `pwd`/NOT_AUTORIZE
+
+
+elif [ $w1  == '1' ] ;then
+
+       echo "$i" >> $pwd/negetive_result.log
+       echo "$i server not good.need to change local time"
+
+
+
+
+fi
+
+
+done
+
+clear
+
+
+finish1=$(wc -l $pwd/negetive_result.log |awk '{ print $1}')
+finish2=$(wc -l $pwd/positive_result.log |awk '{ print $1}')
+finish3=$(wc -l $pwd/ssh_check.log | awk '{ print $1}')
+finish4=$(wc -l $pwd/need_to_change_timezone |awk '{ print $1}')
+
+
+
+F1=$(echo $finish1)
+F2=$(echo $finish2)
+F3=$(echo $finish3)
+
+
+
+
+echo "############"
+echo "#   DONE   #"
+echo "############"
+echo
+echo "you can see all result in deffrent file."
+echo
+echo "just coammnd "ls -a" and see all result file."
+echo
+echo "###################################"
+echo "# server lost conectionin: $F3  #"
+echo "###################################"
+echo
+echo
+echo "########################"
+echo "# good server: $F2 #"
+echo "########################"
+echo
+echo
+echo "#####################################"
+echo "# replace time zoon server: $F1 #"
+echo "#####################################"
+echo
+echo
+echo
+echo
+
+echo "#################################"
+echo "# THANKS FOR USING TIME CHECKER #"
+echo "#################################"
+
+exit
+
+
+
+#finish1=$(cat $pwd/negetive_result.log | wc -l)
+#finish2=$(cat $pwd/positive_result.log | wc -l)
+#finish3=$(cat $pwd/ssh_check.log  | wc -l)
+
+
+
+;;
+
+
+        4)
+                clear
+
+                rm -rf `pwd`/remote_server_timezoon_check.log secsses_server_list.log ssh_check.log tmp_error.log negetive_result.log positive_result.log  need_to_change_timezone
+
+                echo "########################"
+                echo "# ALL FILE LOG DELETED #"
+                echo "########################"
+                echo
+                echo
+                echo
+                echo "#################################"
+                echo "# THANKS FOR USING TIME CHECKER #"
+                echo "#################################"
+                echo
+                echo
+                echo
+                exit
+
+
+esac
